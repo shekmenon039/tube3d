@@ -1,0 +1,15 @@
+[submodule "client/external/rapidjson"]
+	path = client/external/rapidjson
+	url = https://github.com/Tencent/rapidjson.git
+[submodule "client/external/ffmpeg"]
+	path = client/external/ffmpeg
+	url = https://github.com/FFmpeg/FFmpeg.git
+	shallow = true
+[submodule "client/external/libsmb2"]
+	path = client/external/libsmb2
+	url = https://github.com/sahlberg/libsmb2.git
+	shallow = true
+[submodule "client/external/libssh2"]
+	path = client/external/libssh2
+	url = https://github.com/libssh2/libssh2.git
+	shallow = true

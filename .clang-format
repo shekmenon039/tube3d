@@ -1,0 +1,45 @@
+# Tube3D's C/C++ style (client/source). Check: sh tools/format.sh; fix: sh tools/format.sh fix
+BasedOnStyle: LLVM
+Language: Cpp
+UseTab: ForIndentation
+IndentWidth: 4
+TabWidth: 4
+ContinuationIndentWidth: 4
+ColumnLimit: 120
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterControlStatement: Always
+  AfterEnum: false
+  AfterFunction: true
+  AfterStruct: false
+  AfterUnion: false
+  BeforeElse: true
+  BeforeWhile: false
+  SplitEmptyFunction: false
+IndentCaseLabels: false
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLoopsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortBlocksOnASingleLine: Always
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortEnumsOnASingleLine: true
+AlignConsecutiveMacros: Consecutive
+AlignConsecutiveShortCaseStatements:
+  Enabled: true
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 0
+SpacesBeforeTrailingComments: 3
+PointerAlignment: Left
+SortIncludes: Never
+ReflowComments: false
+SpaceAfterCStyleCast: false
+AlignAfterOpenBracket: Align
+BinPackArguments: true
+BinPackParameters: true
+AllowAllArgumentsOnNextLine: true
+PenaltyReturnTypeOnItsOwnLine: 1000
+IndentPPDirectives: None
+MaxEmptyLinesToKeep: 1
+Cpp11BracedListStyle: false

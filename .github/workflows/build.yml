@@ -1,0 +1,97 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitarm:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0   # the commit check reads the pushed commits
+
+      - name: Allow git in the container
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Install portlibs, packaging and lint tools
+        run: |
+          dkp-pacman -Sy --noconfirm --needed 3ds-curl 3ds-mbedtls 3ds-libjpeg-turbo 3ds-zlib
+          apt-get update -qq && apt-get install -y -qq unzip curl python3-pip cmake ninja-build > /dev/null
+          # makerom 0.19 needs glibc 2.38, newer than the devkitARM image has; 0.18.4 needs 2.34
+          curl -sSLo /tmp/makerom.zip https://github.com/3DSGuy/Project_CTR/releases/download/makerom-v0.18.4/makerom-v0.18.4-ubuntu_x86_64.zip
+          curl -sSLo /tmp/bannertool.zip https://github.com/diasurgical/bannertool/releases/download/1.2.0/bannertool.zip
+          unzip -q /tmp/makerom.zip -d /tmp/makerom
+          unzip -q /tmp/bannertool.zip -d /tmp/bannertool
+          install -m 755 /tmp/makerom/makerom /usr/local/bin/makerom
+          install -m 755 /tmp/bannertool/linux-x86_64/bannertool /usr/local/bin/bannertool
+          pip install --quiet --break-system-packages clang-format==21.1.8 clang-tidy==22.1.8 ruff==0.16.10 mypy==2.4.0
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # Checks first: they need no build and fail fast
+      - name: Commit messages (Conventional Commits)
+        if: "!startsWith(github.ref, 'refs/tags/')"
+        run: |
+          head="${{ github.sha }}"
+          before="${{ github.event.before }}"
+          if [ "${{ github.event_name }}" = pull_request ]; then
+            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          elif [ -n "$before" ] && git merge-base --is-ancestor "$before" "$head" 2> /dev/null; then
+            range="$before..$head"   # a normal push: the commits it added
+          else
+            # a new branch, a manual run or a force push (the old head is gone): the last commit
+            range="$head~1..$head"
+            git rev-parse -q --verify "$head~1" > /dev/null || range="$head"
+          fi
+          sh tools/check_commits.sh "$range"
+
+      - name: Formatting (clang-format)
+        run: sh tools/format.sh
+
+      - name: Library cache key
+        id: libs
+        run: echo "key=libs-${{ hashFiles('tools/build_ffmpeg.sh', 'tools/build_libsmb2.sh', 'tools/build_libssh2.sh', 'tools/libsmb2-3ds-connect.patch') }}-$(git submodule status | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
+
+      - name: Reuse the built libraries (FFmpeg, libsmb2, libssh2)
+        uses: actions/cache@v4
+        with:
+          path: client/lib
+          key: ${{ steps.libs.outputs.key }}
+
+      # The submodule libraries and generated headers, which lint compiles against
+      - name: Libraries and generated headers
+        run: make -C client prepare
+
+      - name: Lint (gcc warnings, clang-tidy, clang-format, ruff, mypy, secrets)
+        run: sh tools/lint.sh
+
+      # Any compiler warning in Tube3D's own code fails the build
+      - name: Build
+        run: |
+          make -C client -j"$(nproc)" WERROR=1
+          make -C client release WERROR=1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Tube3D
+          path: |
+            client/Tube3D.3dsx
+            client/Tube3D.cia
+
+      - name: Publish the release (tags vX.Y.Z)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            client/Tube3D.3dsx
+            client/Tube3D.cia
+          generate_release_notes: true

@@ -1,0 +1,34 @@
+; Vertex shader for the motion-smoothed video picture (vmesh.c): a textured mesh whose
+; vertices sit where the picture's content is at the moment being drawn.
+
+; Uniforms
+.fvec projection[4]
+
+; Constants
+.constf myconst(0.0, 1.0, 0.0, 0.0)
+.alias  ones  myconst.yyyy
+
+; Outputs
+.out outpos position
+.out outtc0 texcoord0
+
+; Inputs (set by the AttrInfo in vmesh.c)
+.alias inpos v0
+.alias intex v1
+
+.proc main
+	; r0 = (x, y, z, 1)
+	mov r0.xyz, inpos
+	mov r0.w,   ones
+
+	; outpos = projection * r0
+	dp4 outpos.x, projection[0], r0
+	dp4 outpos.y, projection[1], r0
+	dp4 outpos.z, projection[2], r0
+	dp4 outpos.w, projection[3], r0
+
+	; texture coordinate as given
+	mov outtc0, intex
+
+	end
+.end

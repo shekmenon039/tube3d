@@ -1,0 +1,17 @@
+# Lint and type-check settings for the Python tools in tools/.
+# Run from the repo root:  ruff check .  &&  ruff format --check .  &&  mypy
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+include = ["tools/**/*.py"]
+respect-gitignore = false
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP", "SIM", "C4", "RUF"]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["tools/"]
+ignore_missing_imports = true
+check_untyped_defs = true

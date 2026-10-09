@@ -1,0 +1,57 @@
+--- a/lib/socket.c	2026-10-04 20:19:46.345266839 +0200
++++ b/lib/socket.c	2026-10-04 20:19:46.346078339 +0200
+@@ -1108,6 +1108,36 @@
+         }
+ }
+ 
++/*
++ * The result of a non-blocking connect: 0 connected, 1 failed (*err set), 2 still connecting.
++ * On the 3DS, SO_ERROR reports the raw "in progress" code (-26) even when poll() already says
++ * the socket is writable: there, whether the peer can be named decides.
++ */
++static int
++smb2_connect_result(t_socket fd, int *err)
++{
++        socklen_t err_size = sizeof(*err);
++
++        *err = 0;
++        if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)err, &err_size) != 0) {
++                *err = errno;
++                return 1;
++        }
++#ifdef __3DS__
++        if (*err == -26 || *err == 26 || *err == EINPROGRESS) {
++                struct sockaddr_storage peer;
++                socklen_t peer_len = sizeof(peer);
++
++                if (getpeername(fd, (struct sockaddr *)&peer, &peer_len) == 0) {
++                        *err = 0;
++                        return 0;
++                }
++                return 2;
++        }
++#endif
++        return *err != 0 ? 1 : 0;
++}
++
+ int
+ smb2_service_fd(struct smb2_context *smb2, t_socket fd, int revents)
+ {
+@@ -1181,12 +1211,12 @@
+ 
+         if (!SMB2_VALID_SOCKET(smb2->fd) && revents & POLLOUT) {
+                 int err = 0;
+-                socklen_t err_size = sizeof(err);
++                int result = smb2_connect_result(fd, &err);
+ 
+-                if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&err, &err_size) != 0 || err != 0) {
+-                        if (err == 0) {
+-                                err = errno;
+-                        }
++                if (result == 2) {
++                        goto out;   /* still connecting: poll again */
++                }
++                if (result == 1) {
+                         if (smb2->next_addrinfo != NULL) {
+                                 /* Connecting fd failed, try to connect to the next addr */
+                                 smb2_close_connecting_fd(smb2, fd);

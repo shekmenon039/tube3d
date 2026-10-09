@@ -1,0 +1,12 @@
+client/build/
+client/*.3dsx
+client/*.smdh
+client/*.elf
+client/*.cia
+client/secrets.mk
+__pycache__/
+*:Zone.Identifier
+.mypy_cache/
+.ruff_cache/
+/client/lib/
+/client/build-libs/
