@@ -77,9 +77,9 @@ else
   echo "clang-format not installed: skipped"
 fi
 
-# Google API keys belong in git-ignored client/secrets.mk; only YouTube's public web key (yt.cpp) may be tracked
+# Google API keys belong in git-ignored client/secrets.mk, never in a tracked file
 echo "== secrets in tracked files"
-report "$(git grep -nE 'AIza[0-9A-Za-z_-]{35}' -- . | grep -v AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8)"
+report "$(git grep -nE 'AIza[0-9A-Za-z_-]{35}' -- .)"
 
 if command -v ruff >/dev/null 2>&1; then
   echo "== ruff"

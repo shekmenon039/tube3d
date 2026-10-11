@@ -44,9 +44,8 @@ static void unlock(YtLock* l) { pthread_mutex_unlock(l); }
 using rapidjson::Document;
 using rapidjson::Value;
 
-#define INNERTUBE_KEY "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
-#define MWEB_VERSION  "2.20241202.07.00"
-#define MAX_RESPONSE  (2 * 1024 * 1024)   // player responses are around 0.2-0.6 MB
+#define MWEB_VERSION "2.20241202.07.00"
+#define MAX_RESPONSE (2 * 1024 * 1024)   // player responses are around 0.2-0.6 MB
 static const char* USER_AGENT = "Mozilla/5.0 (Linux; Android 11; Pixel 3a) AppleWebKit/537.36 (KHTML, like Gecko) "
                                 "Chrome/83.0.4103.101 Mobile Safari/537.36";
 
@@ -205,7 +204,7 @@ static long http(const std::string& url, const std::string* post_json, Body& out
 
 static std::string innertube_url(const char* api)
 {
-	return std::string("https://m.youtube.com/youtubei/v1/") + api + "?key=" INNERTUBE_KEY "&prettyPrint=false";
+	return std::string("https://m.youtube.com/youtubei/v1/") + api + "?prettyPrint=false";   // no API key needed
 }
 
 // ---------------------------------------------------------------- JSON helpers
