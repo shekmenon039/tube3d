@@ -12,10 +12,10 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # pinned: the build itself runs in the devkitARM container
     container: devkitpro/devkitarm:latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: true
           fetch-depth: 0   # the commit check reads the pushed commits
@@ -62,7 +62,7 @@ jobs:
         run: echo "key=libs-${{ hashFiles('tools/build_ffmpeg.sh', 'tools/build_libsmb2.sh', 'tools/build_libssh2.sh', 'tools/libsmb2-3ds-connect.patch') }}-$(git submodule status | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
 
       - name: Reuse the built libraries (FFmpeg, libsmb2, libssh2)
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: client/lib
           key: ${{ steps.libs.outputs.key }}
@@ -80,7 +80,7 @@ jobs:
           make -C client -j"$(nproc)" WERROR=1
           make -C client release WERROR=1
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Tube3D
           path: |
@@ -89,7 +89,7 @@ jobs:
 
       - name: Publish the release (tags vX.Y.Z)
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             client/Tube3D.3dsx
